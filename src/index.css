@@ -1,0 +1,380 @@
+:root {
+  color-scheme: dark;
+  font-family: "Aptos", "Trebuchet MS", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #f3efe7;
+  background:
+    radial-gradient(circle at top left, rgba(255, 165, 102, 0.25), transparent 30%),
+    radial-gradient(circle at top right, rgba(73, 92, 255, 0.25), transparent 28%),
+    linear-gradient(180deg, #10131f 0%, #151a29 50%, #0b0d14 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+.shell {
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.hero-card {
+  width: min(760px, 100%);
+  padding: 2rem;
+  border-radius: 28px;
+  background: rgba(16, 19, 31, 0.82);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.32);
+}
+
+.auth-card {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.hero-copy h1,
+.topbar h1,
+.panel h2,
+.task-card h3 {
+  margin: 0;
+  line-height: 1.1;
+}
+
+.hero-copy h1,
+.topbar h1 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
+.panel h2 {
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+}
+
+.hero-copy p,
+.topbar p,
+.panel p,
+.task-description,
+.muted,
+.empty-state {
+  color: rgba(243, 239, 231, 0.78);
+}
+
+.eyebrow {
+  margin: 0 0 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.74rem;
+  color: #ffb36b;
+}
+
+.panel {
+  background: rgba(16, 19, 31, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+}
+
+.form-panel,
+.topbar,
+.stat-card,
+.task-list-panel {
+  padding: 1.25rem;
+}
+
+.switcher {
+  display: inline-flex;
+  gap: 0.5rem;
+  padding: 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  width: fit-content;
+}
+
+.chip,
+.ghost-button,
+.danger-button,
+.primary-button {
+  border-radius: 999px;
+  padding: 0.78rem 1.1rem;
+  transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
+}
+
+.chip,
+.ghost-button {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f3efe7;
+}
+
+.chip.active,
+.primary-button {
+  background: linear-gradient(135deg, #ffb36b, #ff7f50);
+  color: #1b120c;
+  font-weight: 700;
+}
+
+.danger-button {
+  background: rgba(239, 91, 91, 0.18);
+  color: #ffb6b6;
+}
+
+.chip:hover,
+.ghost-button:hover,
+.danger-button:hover,
+.primary-button:hover {
+  transform: translateY(-1px);
+}
+
+.primary-button:disabled,
+.ghost-button:disabled,
+.danger-button:disabled,
+.chip:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.form-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-panel label {
+  display: grid;
+  gap: 0.45rem;
+  color: rgba(243, 239, 231, 0.92);
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f3efe7;
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  outline: none;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(255, 179, 107, 0.7);
+  box-shadow: 0 0 0 3px rgba(255, 179, 107, 0.18);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.status {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.status.error {
+  color: #ffb6b6;
+}
+
+.setup-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.setup-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: rgba(243, 239, 231, 0.82);
+}
+
+.dashboard-shell {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.stat-card span {
+  color: rgba(243, 239, 231, 0.65);
+}
+
+.stat-card strong {
+  font-size: 2rem;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.inline-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.panel-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.task-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.task-card {
+  padding: 1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.task-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.task-card h3 {
+  font-size: 1.1rem;
+}
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: rgba(243, 239, 231, 0.66);
+  font-size: 0.92rem;
+}
+
+.task-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.status-pill {
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status-pill.todo {
+  background: rgba(255, 179, 107, 0.18);
+  color: #ffca94;
+}
+
+.status-pill.doing {
+  background: rgba(119, 145, 255, 0.16);
+  color: #b3c3ff;
+}
+
+.status-pill.done {
+  background: rgba(91, 196, 120, 0.18);
+  color: #a4efb7;
+}
+
+.empty-state {
+  margin: 0;
+  padding: 1rem 0 0.25rem;
+}
+
+@media (max-width: 920px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell {
+    width: min(100% - 1rem, 1180px);
+    padding-top: 1rem;
+  }
+
+  .hero-card,
+  .panel,
+  .topbar,
+  .stat-card,
+  .task-list-panel {
+    border-radius: 20px;
+  }
+
+  .inline-fields,
+  .topbar {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .task-card-head {
+    flex-direction: column;
+  }
+}
