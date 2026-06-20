@@ -1,43 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import type { User } from "firebase/auth";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { firebaseConfigured } from "./lib/firebase";
-import {
-  createTask,
-  login,
-  logout,
-  observeAuth,
-  observeTasks,
-  register,
-  removeTask,
-  updateTask,
-  type Task,
-  type TaskInput,
-  type TaskStatus,
-} from "./lib/tasks";
+import { login, logout, observeAuth, register } from "./lib/tasks";
+import AppSelector from "./AppSelector";
+import PulseBoard from "./PulseBoard";
+import PDFConverter from "./PDFConverter";
 
 type AuthMode = "login" | "register";
 
-const initialTask: TaskInput = {
-  title: "",
-  description: "",
-  status: "todo",
-  dueDate: "",
-};
-
-function formatDate(value: number) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(value);
-}
-
-function statusLabel(status: TaskStatus) {
-  return status === "todo" ? "To do" : status === "doing" ? "In progress" : "Done";
-}
-
-export default function App() {
+function AuthPage() {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [displayName, setDisplayName] = useState("");
@@ -45,52 +19,20 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
-
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [taskError, setTaskError] = useState("");
-  const [tasksLoading, setTasksLoading] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [taskForm, setTaskForm] = useState<TaskInput>(initialTask);
-  const [taskSaving, setTaskSaving] = useState(false);
+  const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
     if (!firebaseConfigured) {
       return;
     }
 
-    return observeAuth(setUser);
-  }, []);
-
-  useEffect(() => {
-    if (!firebaseConfigured || !user) {
-      setTasks([]);
-      return;
-    }
-
-    setTasksLoading(true);
-    const unsubscribe = observeTasks(
-      user.uid,
-      (nextTasks) => {
-        setTasks(nextTasks);
-        setTasksLoading(false);
-      },
-      (message) => {
-        setTaskError(message);
-        setTasksLoading(false);
-      },
-    );
-
-    return unsubscribe;
-  }, [user]);
-
-  const counts = useMemo(
-    () => ({
-      total: tasks.length,
-      open: tasks.filter((task) => task.status !== "done").length,
-      done: tasks.filter((task) => task.status === "done").length,
-    }),
-    [tasks],
-  );
+    return observeAuth((authUser) => {
+      setUser(authUser);
+      if (authUser) {
+        navigate("/");
+      }
+    });
+  }, [navigate]);
 
   async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -113,68 +55,12 @@ export default function App() {
     }
   }
 
-  async function handleTaskSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!user) {
-      return;
-    }
-
-    setTaskError("");
-    setTaskSaving(true);
-
-    try {
-      if (selectedTaskId) {
-        await updateTask(user.uid, selectedTaskId, taskForm);
-      } else {
-        await createTask(user.uid, taskForm);
-      }
-
-      setTaskForm(initialTask);
-      setSelectedTaskId(null);
-    } catch (error) {
-      setTaskError(error instanceof Error ? error.message : "Unable to save task.");
-    } finally {
-      setTaskSaving(false);
-    }
-  }
-
-  async function handleDelete(taskId: string) {
-    if (!user) {
-      return;
-    }
-
-    setTaskError("");
-
-    try {
-      await removeTask(user.uid, taskId);
-      if (selectedTaskId === taskId) {
-        setSelectedTaskId(null);
-        setTaskForm(initialTask);
-      }
-    } catch (error) {
-      setTaskError(error instanceof Error ? error.message : "Unable to delete task.");
-    }
-  }
-
-  function startEditing(task: Task) {
-    setSelectedTaskId(task.id);
-    setTaskForm({
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      dueDate: task.dueDate,
-    });
-  }
-
-  function clearForm() {
-    setSelectedTaskId(null);
-    setTaskForm(initialTask);
-  }
-
   async function handleSignOut() {
     await logout();
-    setTasks([]);
-    clearForm();
+    setEmail("");
+    setPassword("");
+    setDisplayName("");
+    setFormKey(prev => prev + 1);
   }
 
   if (!firebaseConfigured) {
@@ -202,10 +88,10 @@ export default function App() {
       <main className="shell auth-shell">
         <section className="hero-card auth-card">
           <div className="hero-copy">
-            <p className="eyebrow">PulseBoard</p>
-            <h1>Track your day with a calmer, cleaner task board.</h1>
+            <p className="eyebrow">Multi-App Platform</p>
+            <h1>Access PulseBoard and PDF Converter with one account.</h1>
             <p>
-              Register or log in to manage your private task list. Data is scoped per user through Firebase Auth and
+              Register or log in to access your applications. Data is scoped per user through Firebase Auth and
               Firestore rules.
             </p>
           </div>
@@ -222,7 +108,7 @@ export default function App() {
             </button>
           </div>
 
-          <form className="panel form-panel" onSubmit={handleAuthSubmit}>
+          <form key={formKey} className="panel form-panel" onSubmit={handleAuthSubmit}>
             {authMode === "register" && (
               <label>
                 Display name
@@ -231,7 +117,7 @@ export default function App() {
             )}
             <label>
               Email
-              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="alex@example.com" required />
+              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="alex@example.com" required autoComplete="off" />
             </label>
             <label>
               Password
@@ -254,142 +140,76 @@ export default function App() {
     );
   }
 
-  return (
-    <main className="shell dashboard-shell">
-      <header className="topbar panel">
-        <div>
-          <p className="eyebrow">PulseBoard</p>
-          <h1>Welcome back{user.displayName ? `, ${user.displayName}` : ""}.</h1>
-          <p className="muted">{user.email}</p>
-        </div>
+  return <Navigate to="/" replace />;
+}
 
-        <button className="ghost-button" onClick={handleSignOut}>
-          Sign out
-        </button>
-      </header>
+function ProtectedRoute({ children }: { children: (user: User) => React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
 
-      <section className="stats-grid">
-        <article className="stat-card panel">
-          <span>Total</span>
-          <strong>{counts.total}</strong>
-        </article>
-        <article className="stat-card panel">
-          <span>Open</span>
-          <strong>{counts.open}</strong>
-        </article>
-        <article className="stat-card panel">
-          <span>Done</span>
-          <strong>{counts.done}</strong>
-        </article>
-      </section>
+  useEffect(() => {
+    if (!firebaseConfigured) {
+      return;
+    }
 
-      <section className="content-grid">
-        <form className="panel form-panel task-form" onSubmit={handleTaskSubmit}>
-          <div className="panel-title-row">
-            <div>
-              <p className="eyebrow">{selectedTaskId ? "Edit task" : "New task"}</p>
-              <h2>{selectedTaskId ? "Update your task" : "Add a task to the board"}</h2>
-            </div>
-            {selectedTaskId ? (
-              <button type="button" className="ghost-button" onClick={clearForm}>
-                Cancel
-              </button>
-            ) : null}
-          </div>
+    return observeAuth(setUser);
+  }, []);
 
-          <label>
-            Title
-            <input
-              value={taskForm.title}
-              onChange={(event) => setTaskForm((current) => ({ ...current, title: event.target.value }))}
-              placeholder="Finish assignment draft"
-              required
-            />
-          </label>
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
-          <label>
-            Notes
-            <textarea
-              value={taskForm.description}
-              onChange={(event) => setTaskForm((current) => ({ ...current, description: event.target.value }))}
-              placeholder="Add context, links, or a quick next step"
-              rows={4}
-            />
-          </label>
+  return <>{children(user)}</>;
+}
 
-          <div className="inline-fields">
-            <label>
-              Status
-              <select
-                value={taskForm.status}
-                onChange={(event) =>
-                  setTaskForm((current) => ({ ...current, status: event.target.value as TaskStatus }))
-                }
-              >
-                <option value="todo">To do</option>
-                <option value="doing">In progress</option>
-                <option value="done">Done</option>
-              </select>
-            </label>
-
-            <label>
-              Due date
-              <input
-                type="date"
-                value={taskForm.dueDate}
-                onChange={(event) => setTaskForm((current) => ({ ...current, dueDate: event.target.value }))}
-              />
-            </label>
-          </div>
-
-          {taskError ? <p className="status error">{taskError}</p> : null}
-
-          <button className="primary-button" type="submit" disabled={taskSaving}>
-            {taskSaving ? "Saving..." : selectedTaskId ? "Update task" : "Create task"}
-          </button>
-        </form>
-
-        <section className="panel task-list-panel">
-          <div className="panel-title-row">
-            <div>
-              <p className="eyebrow">Your tasks</p>
-              <h2>Live Firestore data</h2>
-            </div>
-            {tasksLoading ? <span className="muted">Syncing...</span> : <span className="muted">{tasks.length} items</span>}
-          </div>
-
-          {tasks.length === 0 && !tasksLoading ? <p className="empty-state">No tasks yet. Create one to get started.</p> : null}
-
-          <div className="task-list">
-            {tasks.map((task) => (
-              <article key={task.id} className="task-card">
-                <div className="task-card-head">
-                  <div>
-                    <h3>{task.title}</h3>
-                    <p className="muted">{statusLabel(task.status)}</p>
-                  </div>
-                  <span className={`status-pill ${task.status}`}>{statusLabel(task.status)}</span>
-                </div>
-
-                {task.description ? <p className="task-description">{task.description}</p> : null}
-                <div className="task-meta">
-                  <span>Created {formatDate(task.createdAt)}</span>
-                  {task.dueDate ? <span>Due {task.dueDate}</span> : null}
-                </div>
-
-                <div className="task-actions">
-                  <button className="ghost-button" onClick={() => startEditing(task)}>
-                    Edit
-                  </button>
-                  <button className="danger-button" onClick={() => void handleDelete(task.id)}>
-                    Delete
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+export default function App() {
+  if (!firebaseConfigured) {
+    return (
+      <main className="shell">
+        <section className="hero-card setup-card">
+          <p className="eyebrow">Firebase required</p>
+          <h1>Configure the backend before running the app.</h1>
+          <p>
+            Copy <strong>.env.example</strong> to <strong>.env</strong>, fill in your Firebase project values, and
+            enable Email/Password authentication in the Firebase console.
+          </p>
+          <ul className="setup-list">
+            <li>Create a Firestore database.</li>
+            <li>Deploy the rules from <strong>firestore.rules</strong>.</li>
+            <li>Restart <strong>npm run dev</strong> after adding the environment variables.</li>
+          </ul>
         </section>
-      </section>
-    </main>
+      </main>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route path="/auth" element={<AuthPage />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            {(user) => <AppSelector user={user} onSignOut={() => logout()} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pulseboard"
+        element={
+          <ProtectedRoute>
+            {(user) => <PulseBoard user={user} onSignOut={() => logout()} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pdf-converter/*"
+        element={
+          <ProtectedRoute>
+            {(user) => <PDFConverter user={user} onSignOut={() => logout()} />}
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/auth" replace />} />
+    </Routes>
   );
 }
