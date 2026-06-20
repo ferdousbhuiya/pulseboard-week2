@@ -2,6 +2,8 @@
 
 PulseBoard is a lightweight task management app built for the Week 2 full-stack assignment. It uses Firebase for authentication and Firestore for user-scoped CRUD data, while the frontend is a Vite + React + TypeScript application.
 
+**Integrated with PDF Converter** - This project now includes a fully integrated PDF converter with 30+ professional PDF tools.
+
 ## Project Overview
 
 The app solves a simple but common problem: keeping personal tasks organized after signing in. Users can register, log in, create tasks, update them, delete them, and keep their data isolated from other users through Firebase Authentication and Firestore security rules.
