@@ -447,17 +447,92 @@ textarea {
 
 .subtitle {
   color: rgba(243, 239, 231, 0.78);
-  margin: 0;
 }
 
 .tool-section {
-  margin: 2rem 0;
+  padding: 2rem 0;
 }
 
 .section-title {
   font-size: 1.5rem;
   margin: 0 0 1rem;
-  color: #ffb36b;
+}
+
+.tool-page {
+  padding: 2rem 0;
+}
+
+.tool-page h2 {
+  margin: 0 0 1.5rem;
+}
+
+.file-picker {
+  margin: 1rem 0;
+}
+
+.file-picker-button {
+  width: 100%;
+  padding: 1.5rem;
+  background: rgba(91, 196, 120, 0.2);
+  border: 2px solid rgba(91, 196, 120, 0.4);
+  border-radius: 0.5rem;
+  color: #a4efb7;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.file-picker-button:hover {
+  background: rgba(91, 196, 120, 0.3);
+  border-color: rgba(91, 196, 120, 0.6);
+  transform: translateY(-2px);
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.row input[type="password"] {
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(243, 239, 231, 0.05);
+  border: 1px solid rgba(243, 239, 231, 0.2);
+  border-radius: 0.5rem;
+  color: inherit;
+}
+
+.row button {
+  padding: 0.75rem 1.5rem;
+  background: rgba(91, 196, 120, 0.2);
+  border: 1px solid rgba(91, 196, 120, 0.4);
+  border-radius: 0.5rem;
+  color: #a4efb7;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.row button:hover:not(:disabled) {
+  background: rgba(91, 196, 120, 0.3);
+}
+
+.row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.back {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  color: rgba(243, 239, 231, 0.7);
+  text-decoration: none;
+}
+
+.back:hover {
+  color: inherit;
 }
 
 .grid {

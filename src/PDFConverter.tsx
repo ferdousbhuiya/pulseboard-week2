@@ -47,7 +47,10 @@ export default function PDFConverter({ user, onSignOut }: PDFConverterProps) {
             <Link to="/pdf-converter" className="back">
               ← Back to all tools
             </Link>
-            <ToolRouter slug={slug} />
+            <div className="tool-page">
+              <h2>Tool: {slug}</h2>
+              <ToolRouter slug={slug} />
+            </div>
           </>
         ) : (
           <>

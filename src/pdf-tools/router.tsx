@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useState } from 'react'
+import { ReactNode, useMemo, useState, useRef } from 'react'
 import { saveAs } from 'file-saver'
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib'
 import JSZip from 'jszip'
@@ -39,18 +39,35 @@ function FilePicker({
   multiple?: boolean
   onFiles: (files: File[]) => void
 }) {
+  console.log('FilePicker rendering with accept:', accept)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleClick = () => {
+    if (inputRef.current) {
+      inputRef.current.click()
+    }
+  }
+
   return (
-    <input
-      type="file"
-      title="Select file"
-      accept={accept}
-      multiple={multiple}
-      onChange={(e) => onFiles(Array.from(e.target.files || []))}
-    />
+    <div className="file-picker">
+      <input
+        ref={inputRef}
+        type="file"
+        title="Select file"
+        accept={accept}
+        multiple={multiple}
+        style={{ display: 'none' }}
+        onChange={(e) => onFiles(Array.from(e.target.files || []))}
+      />
+      <button onClick={handleClick} className="file-picker-button">
+        📁 Choose File
+      </button>
+    </div>
   )
 }
 
 function ToolShell({ title, children }: { title: string; children: ReactNode }) {
+  console.log('ToolShell rendering with title:', title)
   return (
     <section className="tool-page">
       <h2>{title}</h2>
@@ -923,6 +940,7 @@ function SpreadsheetToPdfTool({ title }: { title: string }) {
 }
 
 export function ToolRouter({ slug }: { slug: string }) {
+  console.log('ToolRouter called with slug:', slug)
   switch (slug) {
     case 'merge-pdf':
       return <MergeTool />
