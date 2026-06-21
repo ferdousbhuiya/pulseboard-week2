@@ -39,32 +39,29 @@ function FilePicker({
   multiple?: boolean
   onFiles: (files: File[]) => void
 }) {
-  console.log('FilePicker rendering with accept:', accept)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  const handleClick = () => {
-    if (inputRef.current) {
-      inputRef.current.click()
-    }
-  }
+  const id = useMemo(() => `file-picker-${Math.random().toString(36).slice(2)}`, [])
 
   return (
     <div className="file-picker">
       <input
-        ref={inputRef}
+        id={id}
         type="file"
         title="Select file"
         accept={accept}
         multiple={multiple}
         style={{ display: 'none' }}
-        onChange={(e) => onFiles(Array.from(e.target.files || []))}
+        onChange={(e) => {
+          onFiles(Array.from(e.target.files || []))
+          e.target.value = ''
+        }}
       />
-      <button onClick={handleClick} className="file-picker-button">
+      <label htmlFor={id} className="file-picker-button">
         📁 Choose File
-      </button>
+      </label>
     </div>
   )
 }
+
 
 function ToolShell({ title, children }: { title: string; children: ReactNode }) {
   console.log('ToolShell rendering with title:', title)
