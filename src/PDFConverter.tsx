@@ -1,4 +1,4 @@
-import { Link, useParams, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import type { User } from "firebase/auth";
 import { TOOLS } from "./pdf-tools/catalog";
 import { ToolRouter } from "./pdf-tools/router";
@@ -20,8 +20,11 @@ interface PDFConverterProps {
 
 export default function PDFConverter({ user, onSignOut }: PDFConverterProps) {
   const location = useLocation();
-  const { slug } = useParams();
-  const isToolPage = location.pathname.includes('/tool/');
+  // With HashRouter, location.pathname is the path after '#'
+  // e.g. /pdf-converter/tool/merge-pdf → slug = 'merge-pdf'
+  const toolMatch = location.pathname.match(/\/tool\/([^/]+)/);
+  const slug = toolMatch ? toolMatch[1] : null;
+  const isToolPage = Boolean(slug);
 
   return (
     <main className="shell pdf-converter-shell">
