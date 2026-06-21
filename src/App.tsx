@@ -145,14 +145,27 @@ function AuthPage() {
 
 function ProtectedRoute({ children }: { children: (user: User) => React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!firebaseConfigured) {
+      setLoading(false);
       return;
     }
 
-    return observeAuth(setUser);
+    return observeAuth((authUser) => {
+      setUser(authUser);
+      setLoading(false);
+    });
   }, []);
+
+  if (loading) {
+    return (
+      <main className="shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "var(--muted, #888)", fontSize: "1rem" }}>Loading…</p>
+      </main>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/auth" replace />;
