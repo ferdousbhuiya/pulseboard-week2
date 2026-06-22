@@ -16,6 +16,32 @@ function slugifyName(value: string) {
   return value.toLowerCase().replace(/\s+/g, '-')
 }
 
+async function exportHtmlToPdf(html: string, filename: string) {
+  const container = document.createElement('div')
+  container.className = 'word-pdf-render'
+  container.innerHTML = html
+  container.style.position = 'fixed'
+  container.style.left = '-10000px'
+  container.style.top = '0'
+  document.body.appendChild(container)
+
+  try {
+    const html2pdf = (await import('html2pdf.js')).default
+    await html2pdf()
+      .set({
+        margin: [40, 40, 40, 40],
+        filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+      })
+      .from(container)
+      .save()
+  } finally {
+    document.body.removeChild(container)
+  }
+}
+
 function readImages(files: File[]) {
   return Promise.all(
     files.map(
@@ -728,33 +754,37 @@ function JpgToPdfTool() {
 }
 
 function HtmlToPdfTool() {
-  const [html, setHtml] = useState('<h1>Hello PDF</h1>')
+  const [html, setHtml] = useState('<h1>Hello PDF</h1><p>This is <strong>bold</strong> and <em>italic</em> text.</p>')
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState('')
 
   const run = async () => {
-    const doc = await PDFDocument.create()
-    const page = doc.addPage([595, 842])
-    const font = await doc.embedFont(StandardFonts.Helvetica)
-    const plain = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-    const chunks = plain.match(/.{1,90}/g) || ['']
-    chunks.forEach((chunk, index) => {
-      page.drawText(chunk, {
-        x: 30,
-        y: 800 - index * 16,
-        size: 11,
-        font,
-        color: rgb(0.1, 0.1, 0.1)
-      })
-    })
-    saveAs(toPdfBlob(await doc.save()), 'html-to-pdf.pdf')
+    if (!html.trim()) return
+    setBusy(true)
+    setStatus('Converting...')
+    try {
+      await exportHtmlToPdf(html, 'html-to-pdf.pdf')
+      setStatus('Done')
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Conversion failed')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
     <ToolShell title="HTML to PDF">
-      <p className="hint">Converts text content from HTML markup into a PDF document.</p>
+      <p className="hint">Converts HTML markup into a PDF while preserving headings, styles, lists, and tables.</p>
       <textarea title="HTML input" placeholder="Paste HTML" value={html} onChange={(e) => setHtml(e.target.value)} />
+      {html.trim() ? (
+        <div className="word-pdf-preview" dangerouslySetInnerHTML={{ __html: html }} />
+      ) : null}
       <div className="row">
-        <button onClick={run}>Convert</button>
+        <button onClick={run} disabled={!html.trim() || busy}>
+          Convert
+        </button>
       </div>
+      {status ? <p className="hint">{status}</p> : null}
     </ToolShell>
   )
 }
@@ -853,6 +883,81 @@ function SignTool() {
       </div>
     </ToolShell>
   )
+}
+
+
+function WordToPdfTool() {
+  const [file, setFile] = useState<File | null>(null)
+  const [htmlContent, setHtmlContent] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState('')
+
+  const onFile = async (files: File[]) => {
+    const selected = files[0] || null
+    setFile(selected)
+    setStatus('')
+    if (!selected) {
+      setHtmlContent('')
+      return
+    }
+    try {
+      const mammoth = await import('mammoth')
+      const result = await mammoth.convertToHtml({ arrayBuffer: await selected.arrayBuffer() })
+      setHtmlContent(result.value)
+    } catch {
+      setHtmlContent('')
+      setStatus('Could not read this document. Try a .docx file.')
+    }
+  }
+
+  const run = async () => {
+    if (!file || !htmlContent) return
+    setBusy(true)
+    setStatus('Converting...')
+    try {
+      await exportHtmlToPdf(htmlContent, 'word-to-pdf.pdf')
+      setStatus('Done')
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Conversion failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <ToolShell title="Word to PDF">
+      <p className="hint">
+        Converts .docx files in your browser while preserving headings, bold, italic, lists, and tables.
+      </p>
+      <FilePicker accept=".doc,.docx" onFiles={onFile} />
+      {htmlContent ? (
+        <div className="word-pdf-preview" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+      ) : null}
+      <div className="row">
+        <button onClick={run} disabled={!file || !htmlContent || busy}>
+          Convert
+        </button>
+      </div>
+      {status ? <p className="hint">{status}</p> : null}
+    </ToolShell>
+  )
+}
+
+function WordToPdfRouter() {
+  if (BACKEND_AVAILABLE) {
+    return (
+      <BackendBinaryTool
+        title="Word to PDF"
+        endpoint="/api/convert"
+        accept=".doc,.docx"
+        outputName="word-to-pdf.pdf"
+        extraFields={{ target: 'pdf' }}
+        note="Uses local LibreOffice conversion for best formatting. Requires LibreOffice installed and npm run dev:full."
+      />
+    )
+  }
+
+  return <WordToPdfTool />
 }
 
 
@@ -974,16 +1079,7 @@ export function ToolRouter({ slug }: { slug: string }) {
     case 'jpg-to-pdf':
       return <JpgToPdfTool />
     case 'word-to-pdf':
-      return (
-        <BackendBinaryTool
-          title="Word to PDF"
-          endpoint="/api/convert"
-          accept=".doc,.docx"
-          outputName="word-to-pdf.pdf"
-          extraFields={{ target: 'pdf' }}
-          note="Uses local LibreOffice conversion where supported by your installation."
-        />
-      )
+      return <WordToPdfRouter />
     case 'powerpoint-to-pdf':
       return (
         <BackendBinaryTool
