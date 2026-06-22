@@ -7,6 +7,7 @@ import { login, logout, observeAuth, register } from "./lib/tasks";
 import AppSelector from "./AppSelector";
 import PulseBoard from "./PulseBoard";
 import PDFConverter from "./PDFConverter";
+import FirebaseRequired from "./components/FirebaseRequired";
 
 type AuthMode = "login" | "register";
 
@@ -64,23 +65,7 @@ function AuthPage() {
   }
 
   if (!firebaseConfigured) {
-    return (
-      <main className="shell">
-        <section className="hero-card setup-card">
-          <p className="eyebrow">Firebase required</p>
-          <h1>Configure the backend before running the app.</h1>
-          <p>
-            Copy <strong>.env.example</strong> to <strong>.env</strong>, fill in your Firebase project values, and
-            enable Email/Password authentication in the Firebase console.
-          </p>
-          <ul className="setup-list">
-            <li>Create a Firestore database.</li>
-            <li>Deploy the rules from <strong>firestore.rules</strong>.</li>
-            <li>Restart <strong>npm run dev</strong> after adding the environment variables.</li>
-          </ul>
-        </section>
-      </main>
-    );
+    return <FirebaseRequired />;
   }
 
   if (!user) {
@@ -176,23 +161,7 @@ function ProtectedRoute({ children }: { children: (user: User) => React.ReactNod
 
 export default function App() {
   if (!firebaseConfigured) {
-    return (
-      <main className="shell">
-        <section className="hero-card setup-card">
-          <p className="eyebrow">Firebase required</p>
-          <h1>Configure the backend before running the app.</h1>
-          <p>
-            Copy <strong>.env.example</strong> to <strong>.env</strong>, fill in your Firebase project values, and
-            enable Email/Password authentication in the Firebase console.
-          </p>
-          <ul className="setup-list">
-            <li>Create a Firestore database.</li>
-            <li>Deploy the rules from <strong>firestore.rules</strong>.</li>
-            <li>Restart <strong>npm run dev</strong> after adding the environment variables.</li>
-          </ul>
-        </section>
-      </main>
-    );
+    return <FirebaseRequired />;
   }
 
   return (
