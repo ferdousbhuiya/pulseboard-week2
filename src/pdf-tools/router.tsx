@@ -855,6 +855,86 @@ function SignTool() {
   )
 }
 
+function WordToPdfTool() {
+  const [file, setFile] = useState<File | null>(null)
+  const [textPreview, setTextPreview] = useState('')
+
+  const onFile = async (files: File[]) => {
+    const selected = files[0] || null
+    setFile(selected)
+    if (!selected) {
+      setTextPreview('')
+      return
+    }
+    try {
+      const mammoth = await import('mammoth')
+      const data = await selected.arrayBuffer()
+      const result = await mammoth.extractRawText({ arrayBuffer: data })
+      setTextPreview(result.value)
+    } catch {
+      setTextPreview('Preview unavailable for this document.')
+    }
+  }
+
+  const run = async () => {
+    if (!file) return
+    const text = textPreview || file.name
+    const doc = await PDFDocument.create()
+    const font = await doc.embedFont(StandardFonts.Helvetica)
+    
+    const paragraphs = text.split('\n')
+    const chunks: string[] = []
+    
+    paragraphs.forEach(p => {
+      if (!p.trim()) {
+        chunks.push('')
+        return
+      }
+      const pChunks = p.match(/.{1,90}/g) || ['']
+      chunks.push(...pChunks)
+    })
+
+    let y = 800
+    let page = doc.addPage([595, 842])
+    
+    chunks.forEach((chunk) => {
+      if (y < 40) {
+        page = doc.addPage([595, 842])
+        y = 800
+      }
+      page.drawText(chunk, {
+        x: 30,
+        y: y,
+        size: 11,
+        font,
+        color: rgb(0.1, 0.1, 0.1)
+      })
+      y -= 16
+    })
+    
+    saveAs(toPdfBlob(await doc.save()), 'word-to-pdf.pdf')
+  }
+
+  return (
+    <ToolShell title="Word to PDF">
+      <p className="hint">Client-side text-focused conversion for .docx files.</p>
+      <FilePicker accept=".doc,.docx" onFiles={onFile} />
+      {textPreview ? (
+        <textarea
+          title="Word preview"
+          placeholder="Extracted text preview"
+          value={textPreview}
+          onChange={(e) => setTextPreview(e.target.value)}
+        />
+      ) : null}
+      <div className="row">
+        <button onClick={run} disabled={!file}>
+          Convert
+        </button>
+      </div>
+    </ToolShell>
+  )
+}
 
 function SpreadsheetToPdfTool({ title }: { title: string }) {
   const [file, setFile] = useState<File | null>(null)
@@ -974,16 +1054,7 @@ export function ToolRouter({ slug }: { slug: string }) {
     case 'jpg-to-pdf':
       return <JpgToPdfTool />
     case 'word-to-pdf':
-      return (
-        <BackendBinaryTool
-          title="Word to PDF"
-          endpoint="/api/convert"
-          accept=".doc,.docx"
-          outputName="word-to-pdf.pdf"
-          extraFields={{ target: 'pdf' }}
-          note="Uses local LibreOffice conversion where supported by your installation."
-        />
-      )
+      return <WordToPdfTool />
     case 'powerpoint-to-pdf':
       return (
         <BackendBinaryTool
