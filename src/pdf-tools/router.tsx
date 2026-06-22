@@ -2,7 +2,7 @@ import { ReactNode, useMemo, useState, useRef } from 'react'
 import { saveAs } from 'file-saver'
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib'
 import JSZip from 'jszip'
-import { apiUrl } from '../config/api'
+import { apiUrl, BACKEND_AVAILABLE } from '../config/api'
 
 function toBytes(file: File) {
   return file.arrayBuffer()
@@ -64,7 +64,7 @@ function FilePicker({
 
 
 function ToolShell({ title, children }: { title: string; children: ReactNode }) {
-  console.log('ToolShell rendering with title:', title)
+
   return (
     <section className="tool-page">
       <h2>{title}</h2>
@@ -108,6 +108,22 @@ function BackendBinaryTool({
   extraFields?: Record<string, string>
   note?: string
 }) {
+  if (!BACKEND_AVAILABLE) {
+    return (
+      <ToolShell title={title}>
+        <div className="backend-notice">
+          <span className="backend-notice-icon">🖥️</span>
+          <p><strong>Server required</strong></p>
+          <p className="hint">
+            This tool needs a backend server with {note ? note.split('.')[0] : 'server-side processing'}.
+            It is not available on GitHub Pages.
+          </p>
+          <p className="hint">Run <code>npm run dev:full</code> locally to use this tool.</p>
+        </div>
+      </ToolShell>
+    )
+  }
+
   const [file, setFile] = useState<File | null>(null)
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -163,6 +179,19 @@ function BackendBinaryTool({
 }
 
 function TextResultTool({ title, endpoint, accept, note }: { title: string; endpoint: string; accept: string; note?: string }) {
+  if (!BACKEND_AVAILABLE) {
+    return (
+      <ToolShell title={title}>
+        <div className="backend-notice">
+          <span className="backend-notice-icon">🖥️</span>
+          <p><strong>Server required</strong></p>
+          <p className="hint">This tool needs a backend server to process files. It is not available on GitHub Pages.</p>
+          <p className="hint">Run <code>npm run dev:full</code> locally to use this tool.</p>
+        </div>
+      </ToolShell>
+    )
+  }
+
   const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [text, setText] = useState('')
@@ -256,6 +285,19 @@ function CropTool() {
 }
 
 function RedactTool() {
+  if (!BACKEND_AVAILABLE) {
+    return (
+      <ToolShell title="Redact PDF">
+        <div className="backend-notice">
+          <span className="backend-notice-icon">🖥️</span>
+          <p><strong>Server required</strong></p>
+          <p className="hint">Redaction needs a backend server to apply permanent black-box redactions. It is not available on GitHub Pages.</p>
+          <p className="hint">Run <code>npm run dev:full</code> locally to use this tool.</p>
+        </div>
+      </ToolShell>
+    )
+  }
+
   const [file, setFile] = useState<File | null>(null)
   const [rules, setRules] = useState('1,0.1,0.2,0.6,0.1')
   const [busy, setBusy] = useState(false)
@@ -813,66 +855,6 @@ function SignTool() {
   )
 }
 
-function WordToPdfTool() {
-  const [file, setFile] = useState<File | null>(null)
-  const [textPreview, setTextPreview] = useState('')
-
-  const onFile = async (files: File[]) => {
-    const selected = files[0] || null
-    setFile(selected)
-    if (!selected) {
-      setTextPreview('')
-      return
-    }
-    try {
-      const mammoth = await import('mammoth')
-      const data = await selected.arrayBuffer()
-      const result = await mammoth.extractRawText({ arrayBuffer: data })
-      setTextPreview(result.value.slice(0, 1000))
-    } catch {
-      setTextPreview('Preview unavailable for this document.')
-    }
-  }
-
-  const run = async () => {
-    if (!file) return
-    const text = textPreview || file.name
-    const doc = await PDFDocument.create()
-    const page = doc.addPage([595, 842])
-    const font = await doc.embedFont(StandardFonts.Helvetica)
-    const chunks = text.match(/.{1,90}/g) || ['']
-    chunks.forEach((chunk, index) => {
-      page.drawText(chunk, {
-        x: 30,
-        y: 800 - index * 16,
-        size: 11,
-        font,
-        color: rgb(0.1, 0.1, 0.1)
-      })
-    })
-    saveAs(toPdfBlob(await doc.save()), 'word-to-pdf.pdf')
-  }
-
-  return (
-    <ToolShell title="Word to PDF">
-      <p className="hint">Client-side text-focused conversion for .docx files.</p>
-      <FilePicker accept=".doc,.docx" onFiles={onFile} />
-      {textPreview ? (
-        <textarea
-          title="Word preview"
-          placeholder="Extracted text preview"
-          value={textPreview}
-          onChange={(e) => setTextPreview(e.target.value)}
-        />
-      ) : null}
-      <div className="row">
-        <button onClick={run} disabled={!file}>
-          Convert
-        </button>
-      </div>
-    </ToolShell>
-  )
-}
 
 function SpreadsheetToPdfTool({ title }: { title: string }) {
   const [file, setFile] = useState<File | null>(null)
@@ -937,7 +919,6 @@ function SpreadsheetToPdfTool({ title }: { title: string }) {
 }
 
 export function ToolRouter({ slug }: { slug: string }) {
-  console.log('ToolRouter called with slug:', slug)
   switch (slug) {
     case 'merge-pdf':
       return <MergeTool />
@@ -993,7 +974,16 @@ export function ToolRouter({ slug }: { slug: string }) {
     case 'jpg-to-pdf':
       return <JpgToPdfTool />
     case 'word-to-pdf':
-      return <WordToPdfTool />
+      return (
+        <BackendBinaryTool
+          title="Word to PDF"
+          endpoint="/api/convert"
+          accept=".doc,.docx"
+          outputName="word-to-pdf.pdf"
+          extraFields={{ target: 'pdf' }}
+          note="Uses local LibreOffice conversion where supported by your installation."
+        />
+      )
     case 'powerpoint-to-pdf':
       return (
         <BackendBinaryTool
