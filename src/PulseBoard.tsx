@@ -108,6 +108,22 @@ export default function PulseBoard({ user, onSignOut }: PulseBoardProps) {
     }
   }
 
+  async function handleMarkAsDone(taskId: string) {
+    setTaskError("");
+    try {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
+      await updateTask(user.uid, taskId, {
+        title: task.title,
+        description: task.description,
+        status: "done",
+        dueDate: task.dueDate,
+      });
+    } catch (error) {
+      setTaskError(error instanceof Error ? error.message : "Unable to update task.");
+    }
+  }
+
   function startEditing(task: Task) {
     setSelectedTaskId(task.id);
     setTaskForm({
@@ -251,6 +267,11 @@ export default function PulseBoard({ user, onSignOut }: PulseBoardProps) {
                 </div>
 
                 <div className="task-actions">
+                  {task.status !== "done" && (
+                    <button className="primary-button" onClick={() => void handleMarkAsDone(task.id)}>
+                      ✓ Done
+                    </button>
+                  )}
                   <button className="ghost-button" onClick={() => startEditing(task)}>
                     Edit
                   </button>
