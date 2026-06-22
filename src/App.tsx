@@ -8,6 +8,7 @@ import AppSelector from "./AppSelector";
 import PulseBoard from "./PulseBoard";
 import PDFConverter from "./PDFConverter";
 import FirebaseRequired from "./components/FirebaseRequired";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 type AuthMode = "login" | "register";
 
@@ -128,36 +129,7 @@ function AuthPage() {
   return <Navigate to="/" replace />;
 }
 
-function ProtectedRoute({ children }: { children: (user: User) => React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!firebaseConfigured) {
-      setLoading(false);
-      return;
-    }
-
-    return observeAuth((authUser) => {
-      setUser(authUser);
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading) {
-    return (
-      <main className="shell" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "var(--muted, #888)", fontSize: "1rem" }}>Loading…</p>
-      </main>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  return <>{children(user)}</>;
-}
 
 export default function App() {
   if (!firebaseConfigured) {
